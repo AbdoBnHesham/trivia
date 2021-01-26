@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 from flask import Flask
@@ -11,11 +12,14 @@ QUESTIONS_PER_PAGE = 10
 def create_app(test_config=None):
     # create and configure the app
 
-    load_dotenv()
+    # making sure .env file is loaded for app and tests
+    env_path = Path(Path(__file__).parent, '.env').absolute()
+    load_dotenv(env_path)
+    
     app = Flask(__name__)
     if test_config is None:
         # load the instance config, if it exists, when not testing from an env file
-        app.config.from_envvar('APP_SETTINGS', silent=True)
+        app.config.from_envvar('APP_SETTINGS')
     else:
         # load the test config if passed in
         app.config.from_mapping(test_config)

@@ -21,7 +21,7 @@ class TriviaTestCase(unittest.TestCase):
         # binds the app to the current context
         with self.app.app_context():
             self.db = setup_db(self.app, {
-                'db_name': os.getenv('DB_TEST_NAME')
+                'name': os.getenv('DB_TEST_NAME')
             })
             # create all tables
             self.db.create_all()
