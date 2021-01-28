@@ -1,7 +1,10 @@
 import os
 
 from flask_sqlalchemy import SQLAlchemy, BaseQuery
-from sqlalchemy import Column, String, Integer
+from sqlalchemy import (
+    Column, String,
+    Integer, ForeignKey
+)
 
 db = SQLAlchemy()
 
@@ -42,7 +45,10 @@ class Question(db.Model):
     id = Column(Integer, primary_key=True)
     question = Column(String)
     answer = Column(String)
-    category = Column(String)
+    category_id = Column(
+        Integer,
+        ForeignKey('categories.id', ondelete='CASCADE')
+    )
     difficulty = Column(Integer)
 
     def __init__(self, question, answer, category, difficulty):
@@ -84,6 +90,11 @@ class Category(db.Model):
 
     id = Column(Integer, primary_key=True)
     type = Column(String)
+    questions = db.relationship(
+        'Question',
+        lazy=True,
+        backref=db.backref('category', lazy=False, cascade='all, delete')
+    )
 
     # noinspection PyShadowingBuiltins
     def __init__(self, type):

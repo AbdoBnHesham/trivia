@@ -3,6 +3,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 from flask import Flask
+from flask_migrate import Migrate
 
 from backend.models import setup_db
 
@@ -13,9 +14,10 @@ def create_app(test_config=None):
     # create and configure the app
 
     # making sure .env file is loaded for app and tests
-    env_path = Path(Path(__file__).parent, '.env').absolute()
+    flaskr_dir_path = Path(__file__).parent
+    env_path = Path(flaskr_dir_path, '.env').absolute()
     load_dotenv(env_path)
-    
+
     app = Flask(__name__)
     if test_config is None:
         # load the instance config, if it exists, when not testing from an env file
@@ -24,9 +26,15 @@ def create_app(test_config=None):
         # load the test config if passed in
         app.config.from_mapping(test_config)
 
-    setup_db(app, {
+    db = setup_db(app, {
         'name': os.getenv('DB_NAME')
     })
+
+    Migrate(
+        app, db,
+        # to make sure migrations inside backend folder
+        directory=Path(flaskr_dir_path.parent, 'migrations').absolute()
+    )
 
     '''
     @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
