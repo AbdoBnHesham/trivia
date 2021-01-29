@@ -9,24 +9,27 @@ from flask_migrate import Migrate
 
 from backend.models import setup_db
 
+flaskr_dir_path = Path(__file__).parent
 QUESTIONS_PER_PAGE = 10
 
 
-def create_app(test_config=None):
-    # create and configure the app
-
-    # making sure .env file is loaded for app and tests
-    flaskr_dir_path = Path(__file__).parent
-    env_path = Path(flaskr_dir_path, '.env').absolute()
-    load_dotenv(env_path)
+def create_app(test_env: str = None):
+    """
+    create and configure the app
+    @type test_env: str relative path for .env or .env.test from __init__.py
+    """
 
     app = Flask(__name__)
-    if test_config is None:
-        # load the instance config, if it exists, when not testing from an env file
+    if test_env is None:
+        # load the instance config, from app settings environment variable if not testing
         app.config.from_envvar('APP_SETTINGS')
     else:
-        # load the test config if passed in
-        app.config.from_mapping(test_config)
+        # load the test env file if passed in
+        app.config.from_pyfile(test_env)
+
+    # making sure .env file is loaded for db and other modules
+    env_path = Path(flaskr_dir_path, test_env or '.env').absolute()
+    load_dotenv(env_path)
 
     db = setup_db(app, {
         'name': os.getenv('DB_NAME')
