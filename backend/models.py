@@ -23,7 +23,7 @@ def setup_db(app, db_secrets=None):
         host = db_secrets.get('host', 'localhost')
         port = db_secrets.get('port', '5432')
         db_name = db_secrets.get('name')
-        db_uri = f"postgres://{user}:{_pass}@{host}:{port}/{db_name}"
+        db_uri = f"postgresql://{user}:{_pass}@{host}:{port}/{db_name}"
 
     app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
