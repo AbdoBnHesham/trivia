@@ -105,6 +105,70 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 404, "Response status code isn't 404 not found")
         self.assertEqual(res_data.get("message"), "Not found.", "Response doesn't have message with Not found")
 
+    def test_can_create_a_new_question(self):
+        data = {
+            "question": "When did the French Revolution end?",
+            "answer": "1799",
+            "category": 4,
+            "difficulty": 2,
+        }
+        res: Response = self.client().post("/api/questions", json=data)
+        res_data: dict = res.get_json()
+
+        self.assertEqual(res.status_code, 201, "Response status code isn't 201 created")
+        _id = res_data.get('id')
+        with self.app.app_context():
+            question: Question = Question.query.get(_id)
+        self.assertTrue(question, "Question doesn't exist")
+        self.assertEqual(question.question, data['question'], "Question doesn't exist")
+        self.assertEqual(question.answer, data['answer'], "Question doesn't exist")
+        self.assertEqual(question.category_id, data['category'], "Question doesn't exist")
+        self.assertEqual(question.difficulty, data['difficulty'], "Question doesn't exist")
+
+    def test_cant_create_a_new_question_without_any_field(self):
+        data = {}
+        res: Response = self.client().post("/api/questions", json=data)
+        res_data: dict = res.get_json()
+
+        self.assertEqual(res.status_code, 422, "Response status code isn't 422 unprocessable entity")
+        message = "There is an empty required field. Category doesn't exist. Difficulty range is between 1 to 5."
+        self.assertEqual(res_data.get('message'), message)
+
+    def test_cant_create_a_new_question_with_not_existing_category_id(self):
+        data = {
+            "question": "When did the French Revolution end?",
+            "answer": "1799",
+            "category": 4000,
+            "difficulty": 2,
+        }
+        res: Response = self.client().post("/api/questions", json=data)
+        res_data: dict = res.get_json()
+        self.assertEqual(res.status_code, 422, "Response status code isn't 422 unprocessable entity")
+        message = "Category doesn't exist. "
+        self.assertEqual(res_data.get('message'), message)
+
+    def test_cant_create_a_new_question_with_a_difficulty_out_of_1_to_5_range(self):
+        # less than 1
+        data = {
+            "question": "When did the French Revolution end?",
+            "answer": "1799",
+            "category": 4,
+            "difficulty": -1,
+        }
+        res: Response = self.client().post("/api/questions", json=data)
+        res_data: dict = res.get_json()
+        self.assertEqual(res.status_code, 422, "Response status code isn't 422 unprocessable entity")
+        message = "Difficulty range is between 1 to 5."
+        self.assertEqual(res_data.get('message'), message)
+
+        # more than 5
+        data['difficulty'] = 6
+        res: Response = self.client().post("/api/questions", json=data)
+        res_data: dict = res.get_json()
+        self.assertEqual(res.status_code, 422, "Response status code isn't 422 unprocessable entity")
+        message = "Difficulty range is between 1 to 5."
+        self.assertEqual(res_data.get('message'), message)
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":

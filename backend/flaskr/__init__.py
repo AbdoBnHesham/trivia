@@ -118,16 +118,61 @@ def create_app(test_env: str = None):
 
         return '', 204
 
-    '''
-    @TODO: 
-    Create an endpoint to POST a new question, 
-    which will require the question and answer text, 
-    category, and difficulty score.
-  
-    TEST: When you submit a question on the "Add" tab, 
-    the form will clear and the question will appear at the end of the last page
-    of the questions list in the "List" tab.  
-    '''
+    @app.route('/api/questions', methods=['POST'])
+    def add_question():
+        """
+        @TODO:
+        Create an endpoint to POST a new question,
+        which will require the question and answer text,
+        category, and difficulty score.
+
+        TEST: When you submit a question on the "Add" tab,
+        the form will clear and the question will appear at the end of the last page
+        of the questions list in the "List" tab.
+        """
+
+        data: dict = request.get_json()
+
+        question = data.get('question')
+        answer = data.get('answer')
+        category = data.get('category')
+        difficulty = int(data.get('difficulty', 0))
+
+        all_values_exist = all([question, answer, category, difficulty])
+        category_exist = db.session.query(Category.query.filter_by(id=category).exists()).scalar()
+        difficulty_in_range = 1 <= difficulty <= 5
+
+        if not all([all_values_exist, category_exist, difficulty_in_range]):
+            message = ""
+            if not all_values_exist:
+                message = "There is an empty required field. "
+            if not category_exist:
+                message += "Category doesn't exist. "
+            if not difficulty_in_range:
+                message += "Difficulty range is between 1 to 5."
+            return jsonify({
+                'message': message
+            }), 422
+
+        question_model = Question(
+            question=question,
+            answer=answer,
+            category_id=category,
+            difficulty=difficulty
+        )
+
+        try:
+            db.session.add(question_model)
+            db.session.commit()
+            _id = question_model.id
+        except SQLAlchemyError:
+            db.session.rollback()
+            db.session.close()
+            return '', 500
+
+        return jsonify({
+            'id': _id,
+        }), 201
 
     '''
     @TODO: 
