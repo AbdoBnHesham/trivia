@@ -74,7 +74,7 @@ class Question(db.Model):
             'id': self.id,
             'question': self.question,
             'answer': self.answer,
-            'category': self.category,
+            'category': self.category.id,
             'difficulty': self.difficulty
         }
 
