@@ -36,7 +36,7 @@ class TriviaTestCase(unittest.TestCase):
             downgrade(directory=migrations_path)
 
     """
-    TODO
+    DONE
     Write at least one test for each test for successful operation and for expected errors.
     """
 
@@ -47,7 +47,17 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(res.status_code, 200, "Response status code isn't 200 ok")
         self.assertTrue(isinstance(categories, dict), "Categories aren't a dictionary")
-        self.assertEqual(categories['1'], 'science', "Initial categories aren't exist")
+
+        initial_categories = [
+            ('science', 1),
+            ('art', 2),
+            ('geography', 3),
+            ('history', 4),
+            ('entertainment', 5),
+            ('sports', 6)
+        ]
+        for (c_type, c_id) in initial_categories:
+            self.assertEqual(categories[str(c_id)], c_type, "Initial categories aren't exist")
 
     def test_can_get_questions(self):
         res: Response = self.client().get('/api/questions')
@@ -61,32 +71,32 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200, "Response status code isn't 200 ok")
 
         # questions format
-        self.assertTrue(isinstance(questions, list), "Questions are not a dictionary")
+        self.assertIsInstance(questions, list, "Questions are not a list")
         for k in ['id', 'question', 'answer', 'category', 'difficulty']:
             self.assertTrue(k in questions[0].keys())
             self.assertTrue(questions[0] is not None)
 
         # categories format
-        self.assertTrue(isinstance(categories, dict), "Categories aren't a dictionary")
+        self.assertIsInstance(categories, dict, "Categories are not a dictionary")
 
         # values
         self.assertEqual(current_category, None, 'Current category should be empty when requesting all')
         self.assertEqual(len(questions), 10, "Total Questions per page isn't 10")
-        self.assertEqual(total_questions, 19, 'Question total are not 19')
+        self.assertEqual(total_questions, 19, "total Question isn't 19")
 
     def test_can_get_another_page_of_questions(self):
         res: Response = self.client().get('/api/questions?page=2')
         res_data: dict = res.get_json()
-        questions: list[dict] = res_data.get('questions')
 
-        self.assertEqual(len(questions), 9, "Total Questions per page isn't 9 on the second page")
+        self.assertEqual(len(res_data.get('questions')), 9, "Total Questions per page isn't 9 on the second page")
+        self.assertEqual(res_data.get('total_questions'), 19)
 
     def test_cant_get_not_existing_page_of_questions(self):
         res: Response = self.client().get('/api/questions?page=2000')
         res_data: dict = res.get_json()
 
         self.assertEqual(res.status_code, 404, "Response status code isn't 404 not found.")
-        self.assertEqual(res_data.get("message"), "Not found.", "Response doesn't have message with Not found")
+        self.assertEqual(res_data.get("message"), "Not found.", "Response doesn't have a not found message")
 
     def test_can_delete_question_by_id(self):
         _id = 1
@@ -103,7 +113,7 @@ class TriviaTestCase(unittest.TestCase):
         res_data: dict = res.get_json()
 
         self.assertEqual(res.status_code, 404, "Response status code isn't 404 not found")
-        self.assertEqual(res_data.get("message"), "Not found.", "Response doesn't have message with Not found")
+        self.assertEqual(res_data.get("message"), "Not found.", "Response doesn't have a not found message")
 
     def test_can_create_a_new_question(self):
         data = {
@@ -120,10 +130,10 @@ class TriviaTestCase(unittest.TestCase):
         with self.app.app_context():
             question: Question = Question.query.get(_id)
         self.assertTrue(question, "Question doesn't exist")
-        self.assertEqual(question.question, data['question'], "Question doesn't exist")
-        self.assertEqual(question.answer, data['answer'], "Question doesn't exist")
-        self.assertEqual(question.category_id, data['category'], "Question doesn't exist")
-        self.assertEqual(question.difficulty, data['difficulty'], "Question doesn't exist")
+        self.assertEqual(question.question, data['question'], "Question value is not right")
+        self.assertEqual(question.answer, data['answer'], "Answer value is not right")
+        self.assertEqual(question.category_id, data['category'], "Category value is not right")
+        self.assertEqual(question.difficulty, data['difficulty'], "difficulty value is not right")
 
     def test_cant_create_a_new_question_without_any_field(self):
         data = {}
@@ -178,11 +188,11 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(res.status_code, 200, "Response status code isn't 200 ok")
 
-        self.assertTrue(res_data.get('questions'), "Questions doesn't exist")
+        self.assertIsInstance(res_data.get('questions'), list, "Questions isn't a list")
         self.assertEqual(len(res_data.get('questions')), 1, "Total Questions per page isn't 1")
-        self.assertEqual(res_data.get('total_questions'), 1, 'Question total are not 1')
+        self.assertEqual(res_data.get('total_questions'), 1, 'Questions total are not 1')
 
-        self.assertEqual(res_data.get('current_category'), None)  # TODO search more about it's usage
+        self.assertEqual(res_data.get('current_category'), None, 'Current category should be empty when requesting all')
 
     def test_can_search_with_a_word_doesnt_exist_questions(self):
         data = {
@@ -193,11 +203,11 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(res.status_code, 200, "Response status code isn't 200 ok")
 
-        self.assertTrue('questions' in res_data.keys(), "Questions doesn't exist")
+        self.assertIsInstance(res_data.get('questions'), list, "Questions isn't a list")
         self.assertEqual(len(res_data.get('questions')), 0, "Total Questions per page isn't 0")
-        self.assertEqual(res_data.get('total_questions'), 0, "Question total isn't 0")
+        self.assertEqual(res_data.get('total_questions'), 0, "Questions total isn't 0")
 
-        self.assertEqual(res_data.get('current_category'), None)  # TODO search more about it's usage
+        self.assertEqual(res_data.get('current_category'), None, 'Current category should be empty when requesting all')
 
     def test_can_get_questions_by_category(self):
         _id = 1
@@ -205,9 +215,9 @@ class TriviaTestCase(unittest.TestCase):
         res_data: dict = res.get_json()
 
         self.assertEqual(res.status_code, 200, "Response status code isn't 200 ok")
-        self.assertTrue('questions' in res_data.keys(), "Questions doesn't exist")
+        self.assertIsInstance(res_data.get('questions'), list, "Questions isn't a list")
         self.assertEqual(len(res_data.get('questions')), 3, "Total Questions per page isn't 3")
-        self.assertEqual(res_data.get('total_questions'), 3, "Category's question total are not 3")
+        self.assertEqual(res_data.get('total_questions'), 3, "Total category's question isn't 3")
 
         self.assertEqual(
             int(res_data.get('current_category')), _id,
@@ -220,7 +230,7 @@ class TriviaTestCase(unittest.TestCase):
         res_data: dict = res.get_json()
 
         self.assertEqual(res.status_code, 404, "Response status code isn't 404 not found")
-        self.assertEqual(res_data.get("message"), "Not found.", "Response doesn't have message with Not found")
+        self.assertEqual(res_data.get("message"), "Not found.", "Response doesn't have a not found message")
 
     def test_can_make_basic_quiz(self):
         data = {

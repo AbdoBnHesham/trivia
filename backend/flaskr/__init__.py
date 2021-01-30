@@ -4,6 +4,7 @@ from re import match
 
 from dotenv import load_dotenv
 from flask import Flask, Response, request, jsonify
+from werkzeug.exceptions import InternalServerError
 from flask_cors import CORS
 from flask_migrate import Migrate
 from sqlalchemy import func
@@ -115,14 +116,14 @@ def create_app(test_env: str = None):
         except SQLAlchemyError:
             db.session.rollback()
             db.session.close()
-            return '', 500
+            raise InternalServerError
 
         return '', 204
 
     @app.route('/api/questions', methods=['POST'])
     def add_question():
         """
-        @TODO:
+        @DONE:
         Create an endpoint to POST a new question,
         which will require the question and answer text,
         category, and difficulty score.
@@ -139,6 +140,7 @@ def create_app(test_env: str = None):
         category = data.get('category')
         difficulty = int(data.get('difficulty', 0))
 
+        # Simple validation
         all_values_exist = all([question, answer, category, difficulty])
         category_exist = db.session.query(Category.query.filter_by(id=category).exists()).scalar()
         difficulty_in_range = 1 <= difficulty <= 5
@@ -169,7 +171,7 @@ def create_app(test_env: str = None):
         except SQLAlchemyError:
             db.session.rollback()
             db.session.close()
-            return '', 500
+            raise InternalServerError
 
         return jsonify({
             'id': _id,
@@ -237,7 +239,6 @@ def create_app(test_env: str = None):
 
         quiz_category = data.get('quiz_category')
         previous_questions = data.get('previous_questions') or []
-        print(data)
 
         questions = Question.query
         if quiz_category:
@@ -251,7 +252,7 @@ def create_app(test_env: str = None):
         return jsonify(data)
 
     '''
-    @TODO: 
+    @DONE: 
     Create error handlers for all expected errors 
     including 404 and 422. 
     '''
@@ -261,5 +262,18 @@ def create_app(test_env: str = None):
         return jsonify({
             "message": "Not found.",
         }), 404
+
+    # There is no need for this one for me
+    @app.errorhandler(422)
+    def handle_422(error):
+        return jsonify({
+            "message": "Unprocessable Entity.",
+        }), 422
+
+    @app.errorhandler(500)
+    def handle_422(error):
+        return jsonify({
+            "message": "Internal Server Error.",
+        }), 422
 
     return app
