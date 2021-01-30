@@ -1,6 +1,5 @@
 import os
 import unittest
-import json
 from pathlib import Path
 
 from flask.wrappers import Response
@@ -43,7 +42,7 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_can_get_all_categories(self):
         res: Response = self.client().get('/api/categories')
-        res_data: dict = json.loads(res.data)
+        res_data: dict = res.get_json()
         categories: dict = res_data.get('categories')
 
         self.assertEqual(res.status_code, 200, "Response status code isn't 200 ok")
@@ -52,7 +51,7 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_can_get_questions(self):
         res: Response = self.client().get('/api/questions')
-        res_data: dict = json.loads(res.data)
+        res_data: dict = res.get_json()
         questions: list[dict] = res_data.get('questions')
         total_questions: int = res_data.get('total_questions')
         categories: dict = res_data.get('categories')
@@ -77,14 +76,14 @@ class TriviaTestCase(unittest.TestCase):
 
     def test_can_get_another_page_of_questions(self):
         res: Response = self.client().get('/api/questions?page=2')
-        res_data: dict = json.loads(res.data)
+        res_data: dict = res.get_json()
         questions: list[dict] = res_data.get('questions')
 
         self.assertEqual(len(questions), 9, "Total Questions per page isn't 9 on the second page")
 
     def test_cant_get_not_existing_page_of_questions(self):
         res: Response = self.client().get('/api/questions?page=2000')
-        res_data: dict = json.loads(res.data)
+        res_data: dict = res.get_json()
 
         self.assertEqual(res.status_code, 404, "Response status code isn't 404 not found.")
         self.assertEqual(res_data.get("message"), "Not found.", "Response doesn't have message with Not found")
@@ -101,8 +100,10 @@ class TriviaTestCase(unittest.TestCase):
     def test_cant_delete_question_by_id_with_not_existing_id(self):
         _id = 100000
         res: Response = self.client().delete(f"/api/questions/{_id}")
+        res_data: dict = res.get_json()
 
         self.assertEqual(res.status_code, 404, "Response status code isn't 404 not found")
+        self.assertEqual(res_data.get("message"), "Not found.", "Response doesn't have message with Not found")
 
 
 # Make the tests conveniently executable
