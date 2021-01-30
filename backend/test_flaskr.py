@@ -82,6 +82,21 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(len(questions), 9, "Total Questions per page isn't 9 on the second page")
 
+    def test_can_delete_question_by_id(self):
+        _id = 1
+        res: Response = self.client().delete(f"/api/questions/{_id}")
+
+        with self.app.app_context():
+            question_exists = self.db.session.query(Question.query.filter_by(id=_id).exists()).scalar()
+        self.assertFalse(question_exists, "Question still exists after deletion")
+        self.assertEqual(res.status_code, 204, "Request status code isn't 204 no content")
+
+    def test_cant_delete_question_by_id_with_not_existing_id(self):
+        _id = 100000
+        res: Response = self.client().delete(f"/api/questions/{_id}")
+
+        self.assertEqual(res.status_code, 404, "Request status code isn't 404 not found")
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":

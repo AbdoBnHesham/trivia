@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
+from sqlalchemy.exc import SQLAlchemyError
 
 from backend.models import setup_db, Category, Question
 
@@ -96,13 +97,26 @@ def create_app(test_env: str = None):
 
         return jsonify(data)
 
-    '''
-    @TODO: 
-    Create an endpoint to DELETE question using a question ID. 
-  
-    TEST: When you click the trash icon next to a question, the question will be removed.
-    This removal will persist in the database and when you refresh the page. 
-    '''
+    @app.route('/api/questions/<question_id>', methods=['DELETE'])
+    def delete_question(question_id):
+        """
+        @DONE:
+        Create an endpoint to DELETE question using a question ID.
+
+        TEST: When you click the trash icon next to a question, the question will be removed.
+        This removal will persist in the database and when you refresh the page.
+        """
+
+        question = Question.query.get_or_404(question_id)
+        try:
+            db.session.delete(question)
+            db.session.commit()
+        except SQLAlchemyError:
+            db.session.rollback()
+            db.session.close()
+            return '', 500
+
+        return '', 204
 
     '''
     @TODO: 
