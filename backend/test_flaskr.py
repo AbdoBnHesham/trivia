@@ -199,6 +199,29 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(res_data.get('current_category'), None)  # TODO search more about it's usage
 
+    def test_can_get_questions_by_category(self):
+        _id = 1
+        res: Response = self.client().get(f"/api/categories/{_id}/questions")
+        res_data: dict = res.get_json()
+
+        self.assertEqual(res.status_code, 200, "Response status code isn't 200 ok")
+        self.assertTrue('questions' in res_data.keys(), "Questions doesn't exist")
+        self.assertEqual(len(res_data.get('questions')), 3, "Total Questions per page isn't 3")
+        self.assertEqual(res_data.get('total_questions'), 3, "Category's question total are not 3")
+
+        self.assertEqual(
+            int(res_data.get('current_category')), _id,
+            "Current category isn't equal to requested category id"
+        )
+
+    def test_cant_get_questions_by_category_doesnt_exist(self):
+        _id = 1000
+        res: Response = self.client().get(f"/api/categories/{_id}/questions")
+        res_data: dict = res.get_json()
+
+        self.assertEqual(res.status_code, 404, "Response status code isn't 404 not found")
+        self.assertEqual(res_data.get("message"), "Not found.", "Response doesn't have message with Not found")
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
