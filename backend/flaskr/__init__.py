@@ -174,16 +174,30 @@ def create_app(test_env: str = None):
             'id': _id,
         }), 201
 
-    '''
-    @TODO: 
-    Create a POST endpoint to get questions based on a search term. 
-    It should return any questions for whom the search term 
-    is a substring of the question. 
-  
-    TEST: Search by any phrase. The questions list will update to include 
-    only question that include that string within their question. 
-    Try using the word "title" to start. 
-    '''
+    @app.route('/api/questions/search', methods=['POST'])
+    def search_question():
+        """
+        @DONE:
+        Create a POST endpoint to get questions based on a search term.
+        It should return any questions for whom the search term
+        is a substring of the question.
+
+        TEST: Search by any phrase. The questions list will update to include
+        only question that include that string within their question.
+        Try using the word "title" to start.
+        """
+        q = request.get_json().get('q', '')
+        questions = Question.query.filter(
+            Question.question.ilike(f"%{q}%")
+        ).paginate(per_page=QUESTIONS_PER_PAGE)
+
+        data = {
+            'questions': [q.format() for q in questions.items],
+            'total_questions': questions.total,
+            'current_category': None,
+        }
+
+        return jsonify(data)
 
     '''
     @TODO: 

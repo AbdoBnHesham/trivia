@@ -169,6 +169,36 @@ class TriviaTestCase(unittest.TestCase):
         message = "Difficulty range is between 1 to 5."
         self.assertEqual(res_data.get('message'), message)
 
+    def test_can_search_questions(self):
+        data = {
+            "q": "Indian"
+        }
+        res: Response = self.client().post("/api/questions/search", json=data)
+        res_data: dict = res.get_json()
+
+        self.assertEqual(res.status_code, 200, "Response status code isn't 200 ok")
+
+        self.assertTrue(res_data.get('questions'), "Questions doesn't exist")
+        self.assertEqual(len(res_data.get('questions')), 1, "Total Questions per page isn't 1")
+        self.assertEqual(res_data.get('total_questions'), 1, 'Question total are not 1')
+
+        self.assertEqual(res_data.get('current_category'), None)  # TODO search more about it's usage
+
+    def test_can_search_with_a_word_doesnt_exist_questions(self):
+        data = {
+            "q": "Something you can't get a question about"
+        }
+        res: Response = self.client().post("/api/questions/search", json=data)
+        res_data: dict = res.get_json()
+
+        self.assertEqual(res.status_code, 200, "Response status code isn't 200 ok")
+
+        self.assertTrue('questions' in res_data.keys(), "Questions doesn't exist")
+        self.assertEqual(len(res_data.get('questions')), 0, "Total Questions per page isn't 0")
+        self.assertEqual(res_data.get('total_questions'), 0, "Question total isn't 0")
+
+        self.assertEqual(res_data.get('current_category'), None)  # TODO search more about it's usage
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
