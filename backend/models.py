@@ -51,10 +51,10 @@ class Question(db.Model):
     )
     difficulty = Column(Integer)
 
-    def __init__(self, question, answer, category, difficulty):
+    def __init__(self, question, answer, category_id, difficulty):
         self.question = question
         self.answer = answer
-        self.category = category
+        self.category_id = category_id
         self.difficulty = difficulty
 
     def insert(self):
@@ -74,7 +74,7 @@ class Question(db.Model):
             'id': self.id,
             'question': self.question,
             'answer': self.answer,
-            'category': self.category.id,
+            'category': self.category_id,
             'difficulty': self.difficulty
         }
 
@@ -93,7 +93,8 @@ class Category(db.Model):
     questions = db.relationship(
         'Question',
         lazy=True,
-        backref=db.backref('category', lazy=False, cascade='all, delete')
+        cascade='all, delete',
+        backref=db.backref('category', lazy=False)
     )
 
     # noinspection PyShadowingBuiltins
