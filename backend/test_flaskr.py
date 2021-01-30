@@ -222,6 +222,79 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 404, "Response status code isn't 404 not found")
         self.assertEqual(res_data.get("message"), "Not found.", "Response doesn't have message with Not found")
 
+    def test_can_make_basic_quiz(self):
+        data = {
+            'quiz_category': None,
+            'previous_questions': None
+        }
+        res: Response = self.client().post("/api/quizzes", json=data)
+        res_data: dict = res.get_json()
+        question: dict = res_data.get('question')
+
+        self.assertEqual(res.status_code, 200, "Response status code isn't 200 ok")
+        self.assertTrue(question)
+        self.assertTrue(question.get('id'))
+
+    def test_quizzes_with_previous_questions_and_make_sure_no_duplication(self):
+        data = {
+            'quiz_category': None,
+            'previous_questions': [i for i in range(1, 15)]
+        }
+        res: Response = self.client().post("/api/quizzes", json=data)
+        res_data: dict = res.get_json()
+        question: dict = res_data.get('question')
+
+        self.assertEqual(res.status_code, 200, "Response status code isn't 200 ok")
+        self.assertTrue(question.get('id') not in data['previous_questions'])
+
+    def test_quizzes_with_previous_questions_full(self):
+        data = {
+            'quiz_category': None,
+            'previous_questions': [i for i in range(1, 20)]
+        }
+        res: Response = self.client().post("/api/quizzes", json=data)
+        res_data: dict = res.get_json()
+        question: dict = res_data.get('question')
+
+        self.assertEqual(res.status_code, 200, "Response status code isn't 200 ok")
+        self.assertEqual(question, None)
+
+    def test_quizzes_with_category(self):
+        data = {
+            'quiz_category': 1,
+        }
+        res: Response = self.client().post("/api/quizzes", json=data)
+        res_data: dict = res.get_json()
+        question: dict = res_data.get('question')
+
+        self.assertEqual(res.status_code, 200, "Response status code isn't 200 ok")
+        self.assertEqual(question.get('category'), data['quiz_category'])
+
+    def test_quizzes_with_category_with_prev_questions(self):
+        data = {
+            'quiz_category': 1,
+            'previous_questions': [i for i in range(16, 18)]
+        }
+        res: Response = self.client().post("/api/quizzes", json=data)
+        res_data: dict = res.get_json()
+        question: dict = res_data.get('question')
+
+        self.assertEqual(res.status_code, 200, "Response status code isn't 200 ok")
+        self.assertEqual(question.get('category'), data['quiz_category'])
+        self.assertEqual(question.get('id'), 18)
+
+    def test_quizzes_with_category_with_prev_questions_full(self):
+        data = {
+            'quiz_category': 1,
+            'previous_questions': [i for i in range(16, 19)]
+        }
+        res: Response = self.client().post("/api/quizzes", json=data)
+        res_data: dict = res.get_json()
+        question: dict = res_data.get('question')
+
+        self.assertEqual(res.status_code, 200, "Response status code isn't 200 ok")
+        self.assertEqual(question, None)
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":

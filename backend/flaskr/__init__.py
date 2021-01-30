@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
+from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 
 from backend.models import setup_db, Category, Question
@@ -219,17 +220,35 @@ def create_app(test_env: str = None):
 
         return jsonify(data)
 
-    '''
-    @TODO: 
-    Create a POST endpoint to get questions to play the quiz. 
-    This endpoint should take category and previous question parameters 
-    and return a random questions within the given category, 
-    if provided, and that is not one of the previous questions. 
-  
-    TEST: In the "Play" tab, after a user selects "All" or a category,
-    one question at a time is displayed, the user is allowed to answer
-    and shown whether they were correct or not. 
-    '''
+    @app.route('/api/quizzes', methods=['POST'])
+    def quizzes_handler():
+        """
+        @DONE:
+        Create a POST endpoint to get questions to play the quiz.
+        This endpoint should take category and previous question parameters
+        and return a random questions within the given category,
+        if provided, and that is not one of the previous questions.
+
+        TEST: In the "Play" tab, after a user selects "All" or a category,
+        one question at a time is displayed, the user is allowed to answer
+        and shown whether they were correct or not.
+        """
+        data: dict = request.get_json()
+
+        quiz_category = data.get('quiz_category')
+        previous_questions = data.get('previous_questions') or []
+        print(data)
+
+        questions = Question.query
+        if quiz_category:
+            questions = questions.filter_by(category_id=quiz_category)
+        question = questions.filter(Question.id.notin_(previous_questions)).order_by(func.random()).first()
+
+        data = {
+            'question': question.format() if question else None
+        }
+
+        return jsonify(data)
 
     '''
     @TODO: 
