@@ -189,10 +189,11 @@ def create_app(test_env: str = None):
         only question that include that string within their question.
         Try using the word "title" to start.
         """
-        q = request.get_json().get('q', '')
+        data = request.get_json()
+        q = data.get('q') or ''
         questions = Question.query.filter(
             Question.question.ilike(f"%{q}%")
-        ).paginate(per_page=QUESTIONS_PER_PAGE)
+        ).paginate(page=data.get('page') or 1, per_page=QUESTIONS_PER_PAGE)
 
         data = {
             'questions': [q.format() for q in questions.items],
@@ -271,7 +272,7 @@ def create_app(test_env: str = None):
         }), 422
 
     @app.errorhandler(500)
-    def handle_422(error):
+    def handle_500(error):
         return jsonify({
             "message": "Internal Server Error.",
         }), 422
