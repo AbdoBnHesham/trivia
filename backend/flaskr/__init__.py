@@ -258,6 +258,13 @@ def create_app(test_env: str = None):
     including 404 and 422. 
     '''
 
+    # There is no need for this one for me
+    @app.errorhandler(400)
+    def handle_400(error):
+        return jsonify({
+            "message": "Bad Request.",
+        }), 400
+
     @app.errorhandler(404)
     def handle_404(error):
         return jsonify({
@@ -275,6 +282,6 @@ def create_app(test_env: str = None):
     def handle_500(error):
         return jsonify({
             "message": "Internal Server Error.",
-        }), 422
+        }), 500
 
     return app
