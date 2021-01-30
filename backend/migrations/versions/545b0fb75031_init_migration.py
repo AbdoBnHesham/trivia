@@ -48,6 +48,7 @@ def upgrade():
     ]
     for (cat_type, cat_id) in default_categories:
         op.execute(insert(Category).values((cat_id, cat_type)))
+    op.execute("SELECT pg_catalog.setval('public.categories_id_seq', 6, true);")
 
     default_questions = [
         {
@@ -189,6 +190,7 @@ def upgrade():
     ]
     for q in default_questions:
         op.execute(insert(Question).values(q))
+    op.execute("SELECT pg_catalog.setval('public.questions_id_seq', 19, true);")
 
     # ### end Alembic commands ###
 
