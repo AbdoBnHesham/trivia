@@ -3,6 +3,7 @@ import unittest
 import json
 from pathlib import Path
 
+from flask.wrappers import Response
 from flask_migrate import Migrate, upgrade, downgrade
 from flask_sqlalchemy import SQLAlchemy
 
@@ -39,6 +40,15 @@ class TriviaTestCase(unittest.TestCase):
     TODO
     Write at least one test for each test for successful operation and for expected errors.
     """
+
+    def test_can_get_all_categories(self):
+        res: Response = self.client().get('/api/categories')
+        res_data: dict = json.loads(res.data)
+        categories: dict = res_data.get('categories')
+
+        self.assertEqual(res.status_code, 200, "Request status code isn't 200 ok")
+        self.assertTrue(isinstance(categories, dict), "Categories aren't a dictionary")
+        self.assertEqual(categories['1'], 'science', "Initial categories aren't exist")
 
 
 # Make the tests conveniently executable

@@ -3,11 +3,11 @@ from pathlib import Path
 from re import match
 
 from dotenv import load_dotenv
-from flask import Flask, Response, request
+from flask import Flask, Response, request, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
 
-from backend.models import setup_db
+from backend.models import setup_db, Category
 
 flaskr_dir_path = Path(__file__).parent
 QUESTIONS_PER_PAGE = 10
@@ -54,11 +54,20 @@ def create_app(test_env: str = None):
             response.headers.add('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE')
         return response
 
-    '''
-    @TODO: 
-    Create an endpoint to handle GET requests 
-    for all available categories.
-    '''
+    @app.route('/api/categories')
+    def get_all_categories():
+        """
+        @DONE:
+        Create an endpoint to handle GET requests
+        for all available categories.
+        """
+        categories = Category.query.all()
+
+        res = {
+            'categories': {c.id: c.type for c in categories}
+        }
+
+        return jsonify(res)
 
     '''
     @TODO: 
