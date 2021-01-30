@@ -39,12 +39,12 @@ def upgrade():
 
     # add default data
     default_categories = [
-        ('Science', 1),
-        ('Art', 2),
-        ('Geography', 3),
-        ('History', 4),
-        ('Entertainment', 5),
-        ('Sports', 6)
+        ('science', 1),
+        ('art', 2),
+        ('geography', 3),
+        ('history', 4),
+        ('entertainment', 5),
+        ('sports', 6)
     ]
     for (cat_type, cat_id) in default_categories:
         op.execute(insert(Category).values((cat_id, cat_type)))
