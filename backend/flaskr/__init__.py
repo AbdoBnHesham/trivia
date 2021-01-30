@@ -167,4 +167,10 @@ def create_app(test_env: str = None):
     including 404 and 422. 
     '''
 
+    @app.errorhandler(404)
+    def handle_404(error):
+        return jsonify({
+            "message": "Not found.",
+        }), 404
+
     return app
