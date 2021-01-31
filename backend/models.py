@@ -1,78 +1,108 @@
 import os
-from sqlalchemy import Column, String, Integer, create_engine
-from flask_sqlalchemy import SQLAlchemy
-import json
 
-database_name = "trivia"
-database_path = "postgres://{}/{}".format('localhost:5432', database_name)
+from flask_sqlalchemy import SQLAlchemy, BaseQuery
+from sqlalchemy import (
+    Column, String,
+    Integer, ForeignKey
+)
 
 db = SQLAlchemy()
 
-'''
-setup_db(app)
-    binds a flask application and a SQLAlchemy service
-'''
-def setup_db(app, database_path=database_path):
-    app.config["SQLALCHEMY_DATABASE_URI"] = database_path
+
+def setup_db(app, db_secrets=None):
+    """
+    setup_db(app)
+        binds a flask application and a SQLAlchemy service
+    """
+    if not db_secrets:
+        print(' $ IMPORTANT There is no value for DB URI, using sqlite in memory')
+        db_uri = 'sqlite:///:memory:'
+    else:
+        user = db_secrets.get('user', os.getenv('DB_USER'))
+        _pass = db_secrets.get('pass', os.getenv('DB_PASS', ''))
+        host = db_secrets.get('host', 'localhost')
+        port = db_secrets.get('port', '5432')
+        db_name = db_secrets.get('name')
+        db_uri = f"postgresql://{user}:{_pass}@{host}:{port}/{db_name}"
+
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_uri
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
     db.app = app
     db.init_app(app)
-    db.create_all()
+    return db
 
-'''
-Question
 
-'''
-class Question(db.Model):  
-  __tablename__ = 'questions'
+class Question(db.Model):
+    """
+    Question
 
-  id = Column(Integer, primary_key=True)
-  question = Column(String)
-  answer = Column(String)
-  category = Column(String)
-  difficulty = Column(Integer)
+    """
+    query: BaseQuery
 
-  def __init__(self, question, answer, category, difficulty):
-    self.question = question
-    self.answer = answer
-    self.category = category
-    self.difficulty = difficulty
+    __tablename__ = 'questions'
 
-  def insert(self):
-    db.session.add(self)
-    db.session.commit()
-  
-  def update(self):
-    db.session.commit()
+    id = Column(Integer, primary_key=True)
+    question = Column(String)
+    answer = Column(String)
+    category_id = Column(
+        Integer,
+        ForeignKey('categories.id', ondelete='CASCADE')
+    )
+    difficulty = Column(Integer)
 
-  def delete(self):
-    db.session.delete(self)
-    db.session.commit()
+    def __init__(self, question, answer, category_id, difficulty):
+        self.question = question
+        self.answer = answer
+        self.category_id = category_id
+        self.difficulty = difficulty
 
-  def format(self):
-    return {
-      'id': self.id,
-      'question': self.question,
-      'answer': self.answer,
-      'category': self.category,
-      'difficulty': self.difficulty
-    }
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
 
-'''
-Category
+    # noinspection PyMethodMayBeStatic
+    def update(self):
+        db.session.commit()
 
-'''
-class Category(db.Model):  
-  __tablename__ = 'categories'
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
 
-  id = Column(Integer, primary_key=True)
-  type = Column(String)
+    def format(self):
+        return {
+            'id': self.id,
+            'question': self.question,
+            'answer': self.answer,
+            'category': self.category_id,
+            'difficulty': self.difficulty
+        }
 
-  def __init__(self, type):
-    self.type = type
 
-  def format(self):
-    return {
-      'id': self.id,
-      'type': self.type
-    }
+class Category(db.Model):
+    """
+    Category
+
+    """
+    query: BaseQuery
+
+    __tablename__ = 'categories'
+
+    id = Column(Integer, primary_key=True)
+    type = Column(String)
+    questions = db.relationship(
+        'Question',
+        lazy=True,
+        cascade='all, delete',
+        backref=db.backref('category', lazy=False)
+    )
+
+    # noinspection PyShadowingBuiltins
+    def __init__(self, type):
+        self.type = type
+
+    def format(self):
+        return {
+            'id': self.id,
+            'type': self.type
+        }
